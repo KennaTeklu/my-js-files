@@ -15,12 +15,9 @@ const UI = {
 
     // Render user lists (online/offline)
     renderUsers(users, currentDeviceId) {
-        // In a real app, online status would come from lastSeen
-        // For demo, we'll simulate online/offline
         const online = [];
         const offline = [];
         users.forEach(user => {
-            // Randomly assign online status (fake)
             if (Math.random() > 0.5) online.push(user);
             else offline.push(user);
         });
@@ -85,11 +82,17 @@ const UI = {
 
     // Create a message element (with formatting, reactions, context menu)
     createMessageElement(msg, isMine, otherUserName) {
+        // Handle deleted messages first
+        let messageText = msg.text;
+        if (msg.deleted) {
+            messageText = 'This message was deleted.';
+        }
+
         const msgDiv = document.createElement('div');
         msgDiv.className = 'message ' + (isMine ? 'mine' : '');
         msgDiv.dataset.messageId = msg.id;
         msgDiv.dataset.from = msg.from;
-        msgDiv.dataset.text = msg.text;
+        msgDiv.dataset.text = messageText;
 
         const avatar = document.createElement('div');
         avatar.className = 'message-avatar';
@@ -99,57 +102,55 @@ const UI = {
         bubbleDiv.className = 'message-bubble';
 
         // Format text (bold, italic, code)
-        let formattedText = msg.text
+        let formattedText = messageText
             .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
             .replace(/\*(.*?)\*/g, '<i>$1</i>')
             .replace(/__(.*?)__/g, '<u>$1</u>')
             .replace(/`(.*?)`/g, '<code>$1</code>');
         bubbleDiv.innerHTML = formattedText;
 
-        // Reactions (placeholder)
+        // Reactions display
         const reactionsDiv = document.createElement('div');
         reactionsDiv.className = 'message-reactions';
         if (msg.reactions) {
-            msg.reactions.forEach(r => {
-                const rSpan = document.createElement('span');
-                rSpan.textContent = r.emoji;
-                rSpan.title = r.users.join(', ');
-                reactionsDiv.appendChild(rSpan);
+            Object.entries(msg.reactions).forEach(([emoji, users]) => {
+                const span = document.createElement('span');
+                span.textContent = `${emoji} ${users.length}`;
+                span.title = users.join(', ');
+                reactionsDiv.appendChild(span);
             });
         }
         bubbleDiv.appendChild(reactionsDiv);
 
-        // Edited indicator
-        if (msg.edited) {
-          const editedSpan = document.createElement('span');
-          editedSpan.className = 'edited';
-          editedSpan.textContent = ' (edited)';
-          meta.appendChild(editedSpan);
-        }
-        // Read receipt (only for messages sent to you)
-        if (msg.from !== window.deviceId && msg.readBy && msg.readBy.includes(window.deviceId)) {
-          const statusSpan = document.createElement('span');
-          statusSpan.className = 'message-status';
-          statusSpan.innerHTML = ' ✓✓';
-          meta.appendChild(statusSpan);
-        }
-
-        if (msg.deleted) {
-          msg.text = 'This message was deleted.';
-          // Optionally disable interactions
-        }
-
         const meta = document.createElement('div');
         meta.className = 'message-meta';
         meta.textContent = Utils.formatTime(msg.timestamp);
+
+        // Edited indicator
+        if (msg.edited) {
+            const editedSpan = document.createElement('span');
+            editedSpan.className = 'edited';
+            editedSpan.textContent = ' (edited)';
+            meta.appendChild(editedSpan);
+        }
+
+        // Read receipt (only for messages sent to you)
+        if (msg.from !== window.deviceId && msg.readBy && msg.readBy.includes(window.deviceId)) {
+            const statusSpan = document.createElement('span');
+            statusSpan.className = 'message-status';
+            statusSpan.innerHTML = ' ✓✓';
+            meta.appendChild(statusSpan);
+        }
+
+        // Own message read status
         if (isMine && window.readReceiptsEnabled) {
             const statusSpan = document.createElement('span');
             statusSpan.className = 'message-status';
-            statusSpan.innerHTML = ' ✓✓'; // double check
+            statusSpan.innerHTML = ' ✓✓';
             meta.appendChild(statusSpan);
         }
-        bubbleDiv.appendChild(meta);
 
+        bubbleDiv.appendChild(meta);
         msgDiv.appendChild(avatar);
         msgDiv.appendChild(bubbleDiv);
 
@@ -159,9 +160,9 @@ const UI = {
             this.showMessageContextMenu(e, msg, isMine);
         });
 
-        // Double-click to react
-        msgDiv.addEventListener('dblclick', () => {
-            this.showReactionPicker(msg);
+        // Double-click to react (pass the event)
+        msgDiv.addEventListener('dblclick', (e) => {
+            this.showReactionPicker(msg, e);
         });
 
         return msgDiv;
@@ -241,7 +242,6 @@ const UI = {
         menu.style.left = e.pageX + 'px';
         menu.style.top = e.pageY + 'px';
 
-        // Close on click outside
         const closeMenu = (ev) => {
             if (!menu.contains(ev.target)) {
                 menu.remove();
@@ -264,74 +264,78 @@ const UI = {
     },
 
     async editMessage(msg) {
-      const newText = prompt('Edit message:', msg.text);
-      if (newText && newText !== msg.text) {
-        try {
-          const result = await API.editMessage(msg.id, newText);
-          if (result.success) {
-            // Refresh messages
-            window.loadMessages();
-          }
-        } catch (err) {
-          alert('Failed to edit message.');
+        const newText = prompt('Edit message:', msg.text);
+        if (newText && newText !== msg.text) {
+            try {
+                const result = await API.editMessage(msg.id, newText);
+                if (result.success) {
+                    window.loadMessages();
+                }
+            } catch (err) {
+                alert('Failed to edit message.');
+            }
         }
-      }
-    },
-    
-    async deleteMessage(msg) {
-      if (confirm('Delete this message?')) {
-        try {
-          const result = await API.deleteMessage(msg.id);
-          if (result.success) {
-            // Remove from UI
-            const msgDiv = document.querySelector(`[data-message-id="${msg.id}"]`);
-            if (msgDiv) msgDiv.remove();
-          }
-        } catch (err) {
-          alert('Failed to delete message.');
-        }
-      }
     },
 
-    // Reaction picker (floating)
-    showReactionPicker(msg) {
-      const picker = document.createElement('div');
-      picker.className = 'reaction-picker';
-      const reactions = ['👍', '❤️', '😂', '😮', '😢', '👎'];
-      
-      reactions.forEach(emoji => {
-        const btn = document.createElement('button');
-        btn.textContent = emoji;
-        btn.onclick = async (e) => {
-          e.stopPropagation();
-          const currentReactions = msg.reactions || {};
-          const userReacted = currentReactions[emoji]?.includes(window.deviceId);
-          
-          try {
-            if (userReacted) {
-              await API.removeReaction(msg.id, emoji);
-            } else {
-              await API.addReaction(msg.id, emoji);
+    async deleteMessage(msg) {
+        if (confirm('Delete this message?')) {
+            try {
+                const result = await API.deleteMessage(msg.id);
+                if (result.success) {
+                    const msgDiv = document.querySelector(`[data-message-id="${msg.id}"]`);
+                    if (msgDiv) msgDiv.remove();
+                }
+            } catch (err) {
+                alert('Failed to delete message.');
             }
-            // Refresh messages to show updated reactions
-            window.loadMessages(); // We'll define this globally later
-          } catch (err) {
-            alert('Failed to update reaction. Please try again.');
-          }
-          picker.remove();
-        };
-        picker.appendChild(btn);
-      });
-    
-      document.body.appendChild(picker);
-      
-      // Position near the clicked message
-      const rect = event.target.getBoundingClientRect();
-      picker.style.left = rect.left + 'px';
-      picker.style.top = rect.top - 50 + 'px';
-    
-      // Auto-remove after 5 seconds
-      setTimeout(() => picker.remove(), 5000);
+        }
+    },
+
+    // Reaction picker (floating) – now accepts event
+    showReactionPicker(msg, event) {
+        const picker = document.createElement('div');
+        picker.className = 'reaction-picker';
+        const reactions = ['👍', '❤️', '😂', '😮', '😢', '👎'];
+
+        reactions.forEach(emoji => {
+            const btn = document.createElement('button');
+            btn.textContent = emoji;
+            btn.onclick = async (e) => {
+                e.stopPropagation();
+                const currentReactions = msg.reactions || {};
+                const userReacted = currentReactions[emoji]?.includes(window.deviceId);
+
+                try {
+                    if (userReacted) {
+                        await API.removeReaction(msg.id, emoji);
+                    } else {
+                        await API.addReaction(msg.id, emoji);
+                    }
+                    window.loadMessages();
+                } catch (err) {
+                    alert('Failed to update reaction. Please try again.');
+                }
+                picker.remove();
+            };
+            picker.appendChild(btn);
+        });
+
+        document.body.appendChild(picker);
+
+        // Position near the clicked message
+        if (event && event.target) {
+            const rect = event.target.getBoundingClientRect();
+            picker.style.left = rect.left + 'px';
+            picker.style.top = rect.top - 50 + 'px';
+        } else {
+            // Fallback positioning
+            picker.style.left = '50%';
+            picker.style.top = '50%';
+            picker.style.transform = 'translate(-50%, -50%)';
+        }
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => picker.remove(), 5000);
     }
 };
 
