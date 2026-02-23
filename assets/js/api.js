@@ -21,6 +21,13 @@ const API = {
     async getMessages(deviceId, since) {
         return this._fetch(`action=getMessages&deviceId=${deviceId}&since=${since}`);
     },
+    async addReaction(messageId, emoji) {
+      return this._fetch(`action=addReaction&messageId=${messageId}&deviceId=${window.deviceId}&emoji=${encodeURIComponent(emoji)}`, { method: 'POST' });
+    },
+    
+    async removeReaction(messageId, emoji) {
+      return this._fetch(`action=removeReaction&messageId=${messageId}&deviceId=${window.deviceId}&emoji=${encodeURIComponent(emoji)}`, { method: 'POST' });
+    }
 
     async _fetch(query, options = {}) {
         const url = `${this.baseUrl}?${query}`;
