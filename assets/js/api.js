@@ -29,6 +29,17 @@ const API = {
       return this._fetch(`action=removeReaction&messageId=${messageId}&deviceId=${window.deviceId}&emoji=${encodeURIComponent(emoji)}`, { method: 'POST' });
     }
 
+    async editMessage(messageId, newText) {
+      return this._fetch(`action=editMessage&messageId=${messageId}&newText=${encodeURIComponent(newText)}`, { method: 'POST' });
+    },
+    
+    async deleteMessage(messageId) {
+      return this._fetch(`action=deleteMessage&messageId=${messageId}`, { method: 'POST' });
+    },
+    
+    async markAsRead(fromId) {
+      return this._fetch(`action=markAsRead&deviceId=${window.deviceId}&fromDeviceId=${fromId}`, { method: 'POST' });
+    }
     async _fetch(query, options = {}) {
         const url = `${this.baseUrl}?${query}`;
         try {
