@@ -1,13 +1,203 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>My Blogger Scripts</title>
-    <!-- Use relative links -->
-    <script src="./script1.js"></script>
-    <script src="./script2.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>The everything app · universal chat</title>
+    
+    <!-- SEO & PWA -->
+    <meta name="description" content="A feature‑rich, device‑adaptive chat platform">
+    <meta name="theme-color" content="#1d3a5c">
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Font Awesome (icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Our CSS files (loaded in order) -->
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/theme.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/responsive.css">
+    <link rel="stylesheet" href="/assets/css/animations.css">
 </head>
 <body>
-    <h1>Vercel Hosted Scripts</h1>
-    <button onclick="functionFromScript1()">Run Script 1</button>
+    <!-- Offline indicator -->
+    <div id="offlineIndicator" class="offline-indicator hidden">
+        <i class="fas fa-wifi-slash"></i> You're offline. Messages will be sent when you reconnect.
+    </div>
+
+    <!-- Main app container (flex layout) -->
+    <div class="app-container">
+        <!-- LEFT SIDEBAR (collapsible) -->
+        <aside class="sidebar" id="sidebar" data-swipeable="true">
+            <header class="sidebar-header">
+                <h1>⚡ everything</h1>
+                <div class="sub">chat · social · features</div>
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"><i class="fas fa-moon"></i></button>
+            </header>
+
+            <!-- Tabs (Chats / Contacts / Features) -->
+            <div class="tab-bar" role="tablist">
+                <button class="tab active" data-tab="chats" role="tab" aria-selected="true"><i class="fas fa-comment"></i> Chats</button>
+                <button class="tab" data-tab="contacts" role="tab" aria-selected="false"><i class="fas fa-users"></i> Contacts</button>
+                <button class="tab" data-tab="features" role="tab" aria-selected="false"><i class="fas fa-cube"></i> Features</button>
+            </div>
+
+            <!-- Search bar -->
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" id="contactSearch" placeholder="Search users..." aria-label="Search contacts">
+            </div>
+
+            <!-- Dynamic panels -->
+            <div class="sidebar-content" id="sidebarContent">
+                <!-- Chats panel -->
+                <div id="chatsPanel" class="panel" role="tabpanel">
+                    <div class="section-title">Recent chats</div>
+                    <div id="recentChatsList" class="chat-list"></div>
+                </div>
+
+                <!-- Contacts panel -->
+                <div id="contactsPanel" class="panel hidden" role="tabpanel">
+                    <div class="section-title">Online</div>
+                    <div id="onlineUsersList" class="user-list"></div>
+                    <div class="section-title">Offline</div>
+                    <div id="offlineUsersList" class="user-list"></div>
+                </div>
+
+                <!-- Features panel (feature tree) -->
+                <div id="featuresPanel" class="panel hidden" role="tabpanel">
+                    <div class="feature-tree" id="featureTree"></div>
+                </div>
+            </div>
+
+            <!-- Current user (sidebar footer) -->
+            <footer class="sidebar-footer">
+                <div class="current-user" id="currentUserInfo">
+                    <div class="user-avatar" id="currentUserAvatar">?</div>
+                    <div class="user-details">
+                        <span class="user-name" id="currentUserDisplayName">Anonymous</span>
+                        <span class="user-status" id="currentUserStatus">online</span>
+                    </div>
+                    <i class="fas fa-ellipsis-h" id="userMenuToggle" aria-label="User menu"></i>
+                </div>
+            </footer>
+        </aside>
+
+        <!-- MAIN CHAT AREA -->
+        <main class="main" id="mainChat">
+            <!-- Top navbar with settings -->
+            <nav class="navbar">
+                <div class="navbar-left">
+                    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar"><i class="fas fa-bars"></i></button>
+                    <h2 id="chatWith">Select a chat</h2>
+                </div>
+                <div class="navbar-center">
+                    <span class="status" id="chatStatus"><span class="badge-online"></span> online</span>
+                </div>
+                <div class="navbar-right">
+                    <div class="dropdown" id="settingsDropdown">
+                        <button class="icon-btn" aria-label="Settings"><i class="fas fa-cog"></i></button>
+                        <div class="dropdown-menu hidden">
+                            <!-- Settings items will be populated by JS -->
+                        </div>
+                    </div>
+                    <button class="icon-btn" id="rightPanelToggle" aria-label="Toggle profile"><i class="fas fa-user"></i></button>
+                </div>
+            </nav>
+
+            <!-- Reply preview -->
+            <div id="replyPreview" class="reply-preview hidden">
+                <div class="reply-content">
+                    <i class="fas fa-reply"></i>
+                    <span id="replyText">Replying to message...</span>
+                </div>
+                <button class="cancel-reply" id="cancelReply" aria-label="Cancel reply"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Message container -->
+            <div id="messageContainer" class="message-container" role="log" aria-live="polite"></div>
+
+            <!-- Typing indicator -->
+            <div id="typingIndicator" class="typing-indicator hidden">
+                <span></span><span></span><span></span> typing...
+            </div>
+
+            <!-- Input area -->
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <button class="input-icon" id="attachBtn" aria-label="Attach file"><i class="fas fa-paperclip"></i></button>
+                    <button class="input-icon" id="emojiBtn" aria-label="Choose emoji"><i class="far fa-smile"></i></button>
+                    <button class="input-icon" id="voiceBtn" aria-label="Voice message"><i class="fas fa-microphone"></i></button>
+                    <input type="text" id="messageInput" placeholder="Type a message..." aria-label="Message">
+                </div>
+                <button id="sendBtn" aria-label="Send message"><i class="fas fa-paper-plane"></i> Send</button>
+            </div>
+        </main>
+
+        <!-- RIGHT PANEL – PROFILE & SETTINGS -->
+        <aside class="right-panel" id="rightPanel" data-swipeable="true">
+            <div class="profile-card">
+                <div class="profile-avatar" id="profileAvatar">?</div>
+                <div class="profile-name" id="profileName">Anonymous</div>
+                <div class="profile-bio" id="profileBio" contenteditable="false">Hey there! I'm using The everything app.</div>
+                <button class="edit-profile-btn" id="editProfileBtn" aria-label="Edit profile"><i class="fas fa-edit"></i> Edit</button>
+            </div>
+
+            <!-- Name input (hidden after set) -->
+            <div class="profile-input" id="nameInputContainer">
+                <input type="text" id="nameInput" placeholder="Display name" aria-label="Change display name">
+                <button id="setNameBtn" aria-label="Update name">Update</button>
+            </div>
+
+            <hr>
+
+            <!-- Collapsible sections (populated by JS) -->
+            <div id="profileSettingsSection" class="collapsible-section"></div>
+            <div id="privacySettingsSection" class="collapsible-section"></div>
+
+            <hr>
+
+            <div class="profile-meta">
+                <p><i class="fas fa-shield-alt"></i> End-to-end encrypted</p>
+                <p><i class="fas fa-cloud"></i> Cloud sync</p>
+                <p><i class="fas fa-star"></i> Premium features</p>
+            </div>
+        </aside>
+    </div>
+
+    <!-- MODALS (hidden) -->
+    <div id="emojiPickerModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Emoji picker">
+        <div class="modal-content">
+            <button class="close-modal" aria-label="Close">&times;</button>
+            <div class="emoji-grid" id="emojiGrid"></div>
+        </div>
+    </div>
+
+    <div id="mediaPreviewModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Media preview">
+        <div class="modal-content">
+            <button class="close-modal" aria-label="Close">&times;</button>
+            <div id="mediaPreviewContent"></div>
+        </div>
+    </div>
+
+    <div id="userProfileModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="User profile">
+        <div class="modal-content">
+            <button class="close-modal" aria-label="Close">&times;</button>
+            <div class="user-profile-detail"></div>
+        </div>
+    </div>
+
+    <!-- JavaScript files (loaded in order) -->
+    <script src="/assets/js/utils.js"></script>
+    <script src="/assets/js/api.js"></script>
+    <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/notifications.js"></script>
+    <script src="/assets/js/swipe.js"></script>
+    <script src="/assets/js/offline.js"></script>
+    <script src="/assets/js/featureTree.js"></script>
+    <script src="/assets/js/ui.js"></script>
+    <script src="/assets/js/events.js"></script>
+    <script src="/assets/js/main.js"></script>
 </body>
 </html>
