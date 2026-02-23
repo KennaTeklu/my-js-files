@@ -46,19 +46,19 @@ const EventHandlers = {
         document.getElementById('voiceBtn').addEventListener('click', () => alert('✨ Voice messages coming soon!'));
 
         // Settings dropdown
-        const cogBtn = document.querySelector('#settingsDropdown .icon-btn');
-        const dropdownMenu = document.querySelector('#settingsDropdown .dropdown-menu');
-        if (cogBtn && dropdownMenu) {
-            cogBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                dropdownMenu.classList.toggle('hidden');
-            });
-            document.addEventListener('click', (e) => {
-                if (!document.getElementById('settingsDropdown').contains(e.target)) {
-                    dropdownMenu.classList.add('hidden');
-                }
-            });
-        }
+        //const cogBtn = document.querySelector('#settingsDropdown .icon-btn');
+        //const dropdownMenu = document.querySelector('#settingsDropdown .dropdown-menu');
+        //if (cogBtn && dropdownMenu) {
+          //  cogBtn.addEventListener('click', (e) => {
+            //    e.stopPropagation();
+              //  dropdownMenu.classList.toggle('hidden');
+            //});
+           // document.addEventListener('click', (e) => {
+             //   if (!document.getElementById('settingsDropdown').contains(e.target)) {
+               //     dropdownMenu.classList.add('hidden');
+                //}
+            //});
+        //}
 
         // Settings toggles
         document.getElementById('notificationsToggle')?.addEventListener('change', (e) => {
