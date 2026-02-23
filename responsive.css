@@ -1,0 +1,51 @@
+/* responsive.css – Breakpoints and device adaptations */
+@media (max-width: 1024px) {
+    .sidebar { width: 260px; }
+    .right-panel { width: 240px; }
+    .message { max-width: 85%; }
+}
+
+@media (max-width: 768px) {
+    .sidebar-toggle { display: flex; }
+    
+    .sidebar {
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        width: 280px;
+        transform: translateX(-100%);
+        z-index: 1000;
+        box-shadow: var(--shadow-lg);
+        border-right: none;
+    }
+    
+    .sidebar.open { transform: translateX(0); }
+    
+    .right-panel {
+        position: fixed;
+        top: 0; right: 0; bottom: 0;
+        width: 280px;
+        transform: translateX(100%);
+        z-index: 1000;
+        box-shadow: var(--shadow-lg);
+        border-left: none;
+    }
+    
+    .right-panel.open { transform: translateX(0); }
+    
+    .main { width: 100%; }
+    .message { max-width: 90%; }
+    #sendBtn span { display: none; }
+}
+
+@media (max-width: 480px) {
+    .sidebar { width: 100%; }
+    .right-panel { width: 100%; }
+    .message { max-width: 95%; }
+}
+
+/* Landscape orientation */
+@media (max-height: 500px) and (orientation: landscape) {
+    .sidebar-header { padding: 12px 16px; }
+    .navbar { padding: 8px 16px; }
+    .input-area { padding: 8px 16px; }
+}
