@@ -82,6 +82,25 @@
         }, 3000);
     };
 
+    // Global function to refresh messages (used after reactions, edits, etc.)
+    window.loadMessages = async function() {
+        if (!window.currentUser) return;
+        try {
+            const data = await API.getMessages(window.deviceId, window.lastMessageTime || new Date(0).toISOString());
+            if (data.success && data.data.length > 0) {
+                const newMessages = data.data.filter(m => !window.messages.some(ex => ex.id === m.id));
+                if (newMessages.length > 0) {
+                    window.messages.push(...newMessages);
+                    UI.appendMessages(newMessages, window.deviceId, window.currentUser.name);
+                    const latest = newMessages[newMessages.length - 1].timestamp;
+                    if (latest > window.lastMessageTime) window.lastMessageTime = latest;
+                }
+            }
+        } catch (err) {
+            console.warn('loadMessages error', err);
+        }
+    };
+
     // Select user function (exposed globally)
     window.selectUser = function(user) {
         window.currentUser = user;
@@ -102,6 +121,9 @@
         // Update selected highlight (will be handled by renderUsers)
         UI.renderUsers(window.allUsers, window.deviceId);
         UI.renderRecentChats(window.allUsers);
+        
+        // Mark messages as read (new)
+        API.markAsRead(user.deviceId).catch(err => console.warn('markAsRead failed', err));
     };
 
     // Close modals
