@@ -1,1 +1,3 @@
-alert("Hello from script 2!");
+function changeColor(elementId, color) {
+  document.getElementById(elementId).style.color = color;
+}
