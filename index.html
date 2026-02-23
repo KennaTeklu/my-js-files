@@ -13,17 +13,8 @@
     <!-- Font Awesome (icons) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
-    <!-- Our CSS files (loaded in order) -->
-    <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="stylesheet" href="/assets/css/theme.css">
-    <link rel="stylesheet" href="/assets/css/components.css">
-    <link rel="stylesheet" href="/assets/css/responsive.css">
-    <link rel="stylesheet" href="/assets/css/animations.css">
-    <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="stylesheet" href="/assets/css/theme.css">
-    <link rel="stylesheet" href="/assets/css/components.css">
-    <link rel="stylesheet" href="/assets/css/responsive.css">
-    <link rel="stylesheet" href="/assets/css/animations.css">
+    <!-- Unified CSS – exactly matches the original monolithic look -->
+    <link rel="stylesheet" href="/assets/css/unified.css">
 </head>
 <body>
     <!-- Offline indicator -->
@@ -31,52 +22,43 @@
         <i class="fas fa-wifi-slash"></i> You're offline. Messages will be sent when you reconnect.
     </div>
 
-    <!-- Main app container (flex layout) -->
+    <!-- Main app container -->
     <div class="app-container">
-        <!-- LEFT SIDEBAR (collapsible) -->
+        <!-- LEFT SIDEBAR -->
         <aside class="sidebar" id="sidebar" data-swipeable="true">
-            <header class="sidebar-header">
+            <div class="sidebar-header">
                 <h1>⚡ everything</h1>
                 <div class="sub">chat · social · features</div>
                 <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"><i class="fas fa-moon"></i></button>
-            </header>
+            </div>
 
-            <!-- Tabs (Chats / Contacts / Features) -->
             <div class="tab-bar" role="tablist">
                 <button class="tab active" data-tab="chats" role="tab" aria-selected="true"><i class="fas fa-comment"></i> Chats</button>
                 <button class="tab" data-tab="contacts" role="tab" aria-selected="false"><i class="fas fa-users"></i> Contacts</button>
                 <button class="tab" data-tab="features" role="tab" aria-selected="false"><i class="fas fa-cube"></i> Features</button>
             </div>
 
-            <!-- Search bar -->
             <div class="search-bar">
                 <i class="fas fa-search"></i>
                 <input type="text" id="contactSearch" placeholder="Search users..." aria-label="Search contacts">
             </div>
 
-            <!-- Dynamic panels -->
             <div class="sidebar-content" id="sidebarContent">
-                <!-- Chats panel -->
                 <div id="chatsPanel" class="panel" role="tabpanel">
                     <div class="section-title">Recent chats</div>
                     <div id="recentChatsList" class="chat-list"></div>
                 </div>
-
-                <!-- Contacts panel -->
                 <div id="contactsPanel" class="panel hidden" role="tabpanel">
                     <div class="section-title">Online</div>
                     <div id="onlineUsersList" class="user-list"></div>
                     <div class="section-title">Offline</div>
                     <div id="offlineUsersList" class="user-list"></div>
                 </div>
-
-                <!-- Features panel (feature tree) -->
                 <div id="featuresPanel" class="panel hidden" role="tabpanel">
                     <div class="feature-tree" id="featureTree"></div>
                 </div>
             </div>
 
-            <!-- Current user (sidebar footer) -->
             <footer class="sidebar-footer">
                 <div class="current-user" id="currentUserInfo">
                     <div class="user-avatar" id="currentUserAvatar">?</div>
@@ -91,25 +73,19 @@
 
         <!-- MAIN CHAT AREA -->
         <main class="main" id="mainChat">
-            <!-- Top navbar with settings -->
-            <nav class="navbar">
-                <div class="navbar-left">
+            <div class="chat-header">
+                <div class="chat-header-left">
                     <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar"><i class="fas fa-bars"></i></button>
                     <h2 id="chatWith">Select a chat</h2>
-                </div>
-                <div class="navbar-center">
                     <span class="status" id="chatStatus"><span class="badge-online"></span> online</span>
                 </div>
-                <div class="navbar-right">
-                    <div class="dropdown" id="settingsDropdown">
-                        <button class="icon-btn" aria-label="Settings"><i class="fas fa-cog"></i></button>
-                        <div class="dropdown-menu hidden">
-                            <!-- Settings items will be populated by JS -->
-                        </div>
-                    </div>
-                    <button class="icon-btn" id="rightPanelToggle" aria-label="Toggle profile"><i class="fas fa-user"></i></button>
+                <div class="chat-actions">
+                    <button class="icon-btn" title="Voice call" aria-label="Voice call"><i class="fas fa-phone-alt"></i></button>
+                    <button class="icon-btn" title="Video call" aria-label="Video call"><i class="fas fa-video"></i></button>
+                    <button class="icon-btn" title="Chat info" aria-label="Chat info"><i class="fas fa-info-circle"></i></button>
+                    <button class="icon-btn" title="Delete chat" aria-label="Delete chat"><i class="fas fa-trash-alt"></i></button>
                 </div>
-            </nav>
+            </div>
 
             <!-- Reply preview -->
             <div id="replyPreview" class="reply-preview hidden">
@@ -140,7 +116,7 @@
             </div>
         </main>
 
-        <!-- RIGHT PANEL – PROFILE & SETTINGS -->
+        <!-- RIGHT PANEL -->
         <aside class="right-panel" id="rightPanel" data-swipeable="true">
             <div class="profile-card">
                 <div class="profile-avatar" id="profileAvatar">?</div>
@@ -149,7 +125,7 @@
                 <button class="edit-profile-btn" id="editProfileBtn" aria-label="Edit profile"><i class="fas fa-edit"></i> Edit</button>
             </div>
 
-            <!-- Name input (hidden after set) -->
+            <!-- Name input -->
             <div class="profile-input" id="nameInputContainer">
                 <input type="text" id="nameInput" placeholder="Display name" aria-label="Change display name">
                 <button id="setNameBtn" aria-label="Update name">Update</button>
@@ -157,11 +133,53 @@
 
             <hr>
 
-            <!-- Collapsible sections (populated by JS) -->
-            <div id="profileSettingsSection" class="collapsible-section"></div>
-            <div id="privacySettingsSection" class="collapsible-section"></div>
+            <!-- Profile Settings (collapsible) -->
+            <div class="collapsible-section">
+                <div class="section-header" data-toggle="collapse" data-target="#profileSettings">
+                    <h4>Profile Settings <i class="fas fa-chevron-down"></i></h4>
+                </div>
+                <div id="profileSettings" class="collapse-content">
+                    <div class="setting-item">
+                        <span>Status</span>
+                        <select id="statusSelect">
+                            <option value="online">Online</option>
+                            <option value="away">Away</option>
+                            <option value="busy">Busy</option>
+                            <option value="offline">Offline</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Privacy Settings (collapsible) -->
+            <div class="collapsible-section">
+                <div class="section-header" data-toggle="collapse" data-target="#privacySettings">
+                    <h4>Privacy <i class="fas fa-chevron-down"></i></h4>
+                </div>
+                <div id="privacySettings" class="collapse-content">
+                    <div class="setting-item">
+                        <span>Read receipts</span>
+                        <label class="switch">
+                            <input type="checkbox" id="readReceiptsToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <span>Typing indicator</span>
+                        <label class="switch">
+                            <input type="checkbox" id="typingIndicatorToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
 
             <hr>
+
+            <!-- Dropdown for settings (cog menu) – now populated statically -->
+            <div class="dropdown" id="settingsDropdown" style="display: none;"> <!-- hidden, we already have chat-actions -->
+                <!-- We'll keep it for JS but not needed now -->
+            </div>
 
             <div class="profile-meta">
                 <p><i class="fas fa-shield-alt"></i> End-to-end encrypted</p>
@@ -171,21 +189,19 @@
         </aside>
     </div>
 
-    <!-- MODALS (hidden) -->
+    <!-- MODALS -->
     <div id="emojiPickerModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Emoji picker">
         <div class="modal-content">
             <button class="close-modal" aria-label="Close">&times;</button>
             <div class="emoji-grid" id="emojiGrid"></div>
         </div>
     </div>
-
     <div id="mediaPreviewModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Media preview">
         <div class="modal-content">
             <button class="close-modal" aria-label="Close">&times;</button>
             <div id="mediaPreviewContent"></div>
         </div>
     </div>
-
     <div id="userProfileModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="User profile">
         <div class="modal-content">
             <button class="close-modal" aria-label="Close">&times;</button>
@@ -193,7 +209,7 @@
         </div>
     </div>
 
-    <!-- JavaScript files (loaded in order) -->
+    <!-- JavaScript files (unchanged) -->
     <script src="/assets/js/utils.js"></script>
     <script src="/assets/js/api.js"></script>
     <script src="/assets/js/theme.js"></script>
