@@ -42,6 +42,12 @@ const API = {
         return this._fetch(`action=markAsRead&deviceId=${window.deviceId}&fromDeviceId=${fromId}`, { method: 'POST' });
     },
 
+    async uploadProfilePicture(deviceId, imageData) {
+        // For future: implement image upload to Google Drive
+        console.warn('Profile picture upload not yet implemented');
+        return { success: false };
+    },
+
     async _fetch(query, options = {}) {
         const url = `${this.baseUrl}?${query}`;
         try {
