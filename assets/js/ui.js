@@ -15,9 +15,11 @@ const UI = {
 
     // Render user lists (online/offline)
     renderUsers(users, currentDeviceId) {
+        // For demo, we'll simulate online/offline (replace with real logic)
         const online = [];
         const offline = [];
         users.forEach(user => {
+            // Randomly assign online status (fake)
             if (Math.random() > 0.5) online.push(user);
             else offline.push(user);
         });
@@ -41,6 +43,7 @@ const UI = {
         div.className = 'user-item' + (window.currentUser && window.currentUser.deviceId === user.deviceId ? ' selected' : '');
         const avatar = document.createElement('div');
         avatar.className = 'user-avatar';
+        // If user has avatar, set background image (future)
         avatar.textContent = (user.name && user.name[0]) || '?';
         const info = document.createElement('div');
         info.className = 'user-info';
@@ -82,7 +85,7 @@ const UI = {
 
     // Create a message element (with formatting, reactions, context menu)
     createMessageElement(msg, isMine, otherUserName) {
-        // Handle deleted messages first
+        // Handle deleted messages
         let messageText = msg.text;
         if (msg.deleted) {
             messageText = 'This message was deleted.';
@@ -134,7 +137,7 @@ const UI = {
             meta.appendChild(editedSpan);
         }
 
-        // Read receipt (only for messages sent to you)
+        // Read receipt (for messages sent to you)
         if (msg.from !== window.deviceId && msg.readBy && msg.readBy.includes(window.deviceId)) {
             const statusSpan = document.createElement('span');
             statusSpan.className = 'message-status';
@@ -142,7 +145,7 @@ const UI = {
             meta.appendChild(statusSpan);
         }
 
-        // Own message read status
+        // Own message read status (if enabled)
         if (isMine && window.readReceiptsEnabled) {
             const statusSpan = document.createElement('span');
             statusSpan.className = 'message-status';
@@ -190,13 +193,25 @@ const UI = {
         this.messageContainer.innerHTML = '';
     },
 
-    // Update profile display
-    updateProfile(name) {
+    // Update profile display (with avatar)
+    updateProfile(name, avatarData) {
         this.currentUserDisplay.textContent = name;
         this.profileName.textContent = name;
         const initial = name[0] || '?';
-        this.currentUserAvatar.textContent = initial;
-        this.profileAvatar.textContent = initial;
+        if (avatarData) {
+            // If avatar image exists, set as background
+            this.currentUserAvatar.style.backgroundImage = `url(${avatarData})`;
+            this.currentUserAvatar.style.backgroundSize = 'cover';
+            this.currentUserAvatar.textContent = '';
+            this.profileAvatar.style.backgroundImage = `url(${avatarData})`;
+            this.profileAvatar.style.backgroundSize = 'cover';
+            this.profileAvatar.textContent = '';
+        } else {
+            this.currentUserAvatar.style.backgroundImage = '';
+            this.currentUserAvatar.textContent = initial;
+            this.profileAvatar.style.backgroundImage = '';
+            this.profileAvatar.textContent = initial;
+        }
     },
 
     // Show typing indicator
@@ -328,13 +343,11 @@ const UI = {
             picker.style.left = rect.left + 'px';
             picker.style.top = rect.top - 50 + 'px';
         } else {
-            // Fallback positioning
             picker.style.left = '50%';
             picker.style.top = '50%';
             picker.style.transform = 'translate(-50%, -50%)';
         }
 
-        // Auto-remove after 5 seconds
         setTimeout(() => picker.remove(), 5000);
     }
 };
