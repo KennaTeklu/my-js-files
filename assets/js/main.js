@@ -5,13 +5,14 @@
     window.deviceId = Utils.generateDeviceId();
     window.currentUser = null;
     window.myName = localStorage.getItem('chatMyName') || 'Anonymous';
-    window.myAvatar = localStorage.getItem('chatMyAvatar') || null; // store avatar as data URL or path
+    window.myAvatar = localStorage.getItem('chatMyAvatar') || null;
     window.messages = [];
     window.replyToMessage = null;
     window.polling = false;
     window.allUsers = [];
     window.readReceiptsEnabled = localStorage.getItem('readReceipts') !== 'false';
     window.typingIndicatorEnabled = localStorage.getItem('typingIndicator') !== 'false';
+    window.lastMessageTime = new Date(0).toISOString();
 
     // Initialize all modules
     ThemeManager.init();
@@ -60,7 +61,7 @@
                 return;
             }
             try {
-                const data = await API.getMessages(window.deviceId, window.lastMessageTime || new Date(0).toISOString());
+                const data = await API.getMessages(window.deviceId, window.lastMessageTime);
                 if (data.success && data.data.length > 0) {
                     const newMessages = data.data.filter(m => !window.messages.some(ex => ex.id === m.id));
                     if (newMessages.length > 0) {
@@ -84,7 +85,7 @@
     window.loadMessages = async function() {
         if (!window.currentUser) return;
         try {
-            const data = await API.getMessages(window.deviceId, window.lastMessageTime || new Date(0).toISOString());
+            const data = await API.getMessages(window.deviceId, window.lastMessageTime);
             if (data.success && data.data.length > 0) {
                 const newMessages = data.data.filter(m => !window.messages.some(ex => ex.id === m.id));
                 if (newMessages.length > 0) {
@@ -137,4 +138,9 @@
             e.target.classList.add('hidden');
         }
     });
+
+    // Hide name input if name already set
+    if (window.myName !== 'Anonymous') {
+        document.getElementById('nameInputContainer').classList.add('hidden');
+    }
 })();
