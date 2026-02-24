@@ -5,6 +5,7 @@
     window.deviceId = Utils.generateDeviceId();
     window.currentUser = null;
     window.myName = localStorage.getItem('chatMyName') || 'Anonymous';
+    window.myAvatar = localStorage.getItem('chatMyAvatar') || null; // store avatar as data URL or path
     window.messages = [];
     window.replyToMessage = null;
     window.polling = false;
@@ -19,7 +20,7 @@
     OfflineManager.init();
 
     // Set initial UI
-    UI.updateProfile(window.myName);
+    UI.updateProfile(window.myName, window.myAvatar);
     if (window.myName !== 'Anonymous') {
         document.getElementById('nameInputContainer').classList.add('hidden');
     }
@@ -61,15 +62,12 @@
             try {
                 const data = await API.getMessages(window.deviceId, window.lastMessageTime || new Date(0).toISOString());
                 if (data.success && data.data.length > 0) {
-                    // Filter new messages not already in UI
                     const newMessages = data.data.filter(m => !window.messages.some(ex => ex.id === m.id));
                     if (newMessages.length > 0) {
                         window.messages.push(...newMessages);
                         UI.appendMessages(newMessages, window.deviceId, window.currentUser.name);
-                        // Update last message time
                         const latest = newMessages[newMessages.length - 1].timestamp;
                         if (latest > window.lastMessageTime) window.lastMessageTime = latest;
-                        // Notify
                         if (newMessages.some(m => m.from !== window.deviceId)) {
                             NotificationManager.playSound();
                             NotificationManager.notify(`New message from ${window.currentUser.name}`, newMessages[0].text);
@@ -118,11 +116,11 @@
                 if (latest > window.lastMessageTime) window.lastMessageTime = latest;
             }
         });
-        // Update selected highlight (will be handled by renderUsers)
+        // Update selected highlight
         UI.renderUsers(window.allUsers, window.deviceId);
         UI.renderRecentChats(window.allUsers);
         
-        // Mark messages as read (new)
+        // Mark messages as read
         API.markAsRead(user.deviceId).catch(err => console.warn('markAsRead failed', err));
     };
 
