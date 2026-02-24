@@ -45,6 +45,21 @@ const EventHandlers = {
         // Voice message (placeholder)
         document.getElementById('voiceBtn').addEventListener('click', () => alert('✨ Voice messages coming soon!'));
 
+        // Settings dropdown (cog)
+        const cogBtn = document.querySelector('#settingsDropdown .icon-btn');
+        const dropdownMenu = document.querySelector('#settingsDropdown .dropdown-menu');
+        if (cogBtn && dropdownMenu) {
+            cogBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdownMenu.classList.toggle('hidden');
+            });
+            document.addEventListener('click', (e) => {
+                if (!document.getElementById('settingsDropdown').contains(e.target)) {
+                    dropdownMenu.classList.add('hidden');
+                }
+            });
+        }
+
         // Settings toggles
         document.getElementById('notificationsToggle')?.addEventListener('change', (e) => {
             NotificationManager.toggleNotifications(e.target.checked);
@@ -75,42 +90,42 @@ const EventHandlers = {
             });
         }
 
+        // Profile picture upload (click on avatar)
+        const profileAvatar = document.getElementById('profileAvatar');
+        if (profileAvatar) {
+            profileAvatar.addEventListener('click', () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            const imageData = event.target.result;
+                            localStorage.setItem('chatMyAvatar', imageData);
+                            window.myAvatar = imageData;
+                            UI.updateProfile(window.myName, imageData);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                };
+                input.click();
+            });
+        }
+
         // Edit profile (toggle bio edit)
         document.getElementById('editProfileBtn').addEventListener('click', () => {
             const bio = document.getElementById('profileBio');
             if (bio.isContentEditable) {
                 bio.contentEditable = false;
                 document.getElementById('editProfileBtn').innerHTML = '<i class="fas fa-edit"></i> Edit';
-                // Save bio (would send to backend)
                 alert('✨ Profile updated (placeholder)');
             } else {
                 bio.contentEditable = true;
                 bio.focus();
                 document.getElementById('editProfileBtn').innerHTML = '<i class="fas fa-save"></i> Save';
             }
-        });
-
-        // Profile picture upload (new)
-        const profileAvatar = document.getElementById('profileAvatar');
-        profileAvatar.addEventListener('click', () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.onchange = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const imageData = event.target.result;
-                        // Store in localStorage for now (later send to server)
-                        localStorage.setItem('chatMyAvatar', imageData);
-                        window.myAvatar = imageData;
-                        UI.updateProfile(window.myName, imageData);
-                    };
-                    reader.readAsDataURL(file);
-                }
-            };
-            input.click();
         });
 
         // User menu (placeholder)
@@ -148,7 +163,7 @@ const EventHandlers = {
                 if (!sidebar.contains(e.target) && !document.getElementById('sidebarToggle').contains(e.target)) {
                     sidebar.classList.remove('open');
                 }
-                if (!rightPanel.contains(e.target) && !document.getElementById('rightPanelToggle').contains(e.target)) {
+                if (!rightPanel.contains(e.target) && !document.getElementById('rightPanelToggle').contains(e.target) && !document.getElementById('userMenuToggle').contains(e.target)) {
                     rightPanel.classList.remove('open');
                 }
             }
@@ -158,7 +173,10 @@ const EventHandlers = {
     async sendMessage() {
         const input = document.getElementById('messageInput');
         let msg = input.value;
-        if (!msg || !window.currentUser) return;
+        if (!msg || !window.currentUser) {
+            console.warn('sendMessage: no message or no currentUser');
+            return;
+        }
 
         if (window.replyToMessage) {
             msg = `> ${window.replyToMessage.text}\n\n` + msg;
@@ -188,7 +206,7 @@ const EventHandlers = {
                 OfflineManager.queueMessage(window.currentUser.deviceId, msg);
             }
         } catch (err) {
-            console.warn('Send failed, will retry later');
+            console.warn('Send failed, will retry later', err);
             OfflineManager.queueMessage(window.currentUser.deviceId, msg);
         }
     },
@@ -205,6 +223,7 @@ const EventHandlers = {
                 localStorage.setItem('chatMyName', name);
                 UI.updateProfile(name, window.myAvatar);
                 document.getElementById('nameInputContainer').classList.add('hidden');
+                // Reload users to reflect new name
                 API.getUsers(window.deviceId).then(data => {
                     if (data.success) {
                         window.allUsers = data.data;
