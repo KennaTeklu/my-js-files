@@ -33,5 +33,4 @@ const Utils = {
     }
 };
 
-// Export to global
 window.Utils = Utils;
